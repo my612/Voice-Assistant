@@ -25,7 +25,9 @@ from bs4 import BeautifulSoup
 import win32com.client as wincl
 from urllib.request import urlopen
 from AppOpener import open
+from AppOpener import close
 from pynput.keyboard import Key, Controller
+import pyautogui
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
@@ -50,28 +52,34 @@ def wishMe():
     say("I am your assistant")
     say(assname)
 
-def takeCommand(t = 1, d = 0.5):
+def takeCommand(t=1, d=0.5):
     r = sr.Recognizer()
     
-    with sr.Microphone(sample_rate=16000) as source:
-        print("Listening...")
-        r.adjust_for_ambient_noise(source, duration=1)  # Adjust for ambient noise with a longer duration
-        print("Calibrated for ambient noise")
-        r.pause_threshold = t  # Shorten pause threshold to reduce waiting time after speech
-        r.non_speaking_duration = d  # Reduce the duration considered as non-speaking
-        
-        audio = r.listen(source)
-        print("Stopped listening...")
-        
-    try:
-        print("Recognizing with Google Web Speech API...")
-        query = r.recognize_google(audio, language='en-US')
-        print(f"Google Web Speech API recognized: {query}\n")
-        return query
-    except sr.UnknownValueError:
-        print("Google Web Speech API could not understand audio")
-    except sr.RequestError as e:
-        print(f"Could not request results from Google Web Speech API; {e}")
+    while True:
+        with sr.Microphone(sample_rate=16000) as source:
+            print("Listening...")
+            r.adjust_for_ambient_noise(source, duration=1)  # Adjust for ambient noise with a longer duration
+            print("Calibrated for ambient noise")
+            r.pause_threshold = t  # Set pause threshold
+            r.non_speaking_duration = d  # Set non-speaking duration
+            
+            audio = r.listen(source)
+            print("Stopped listening...")
+            
+        try:
+            print("Recognizing with Google Web Speech API...")
+            query = r.recognize_google(audio, language='en-US')
+            print(f"Google Web Speech API recognized: {query}\n")
+            return query
+        except sr.UnknownValueError:
+            print("Google Web Speech API could not understand audio, please try again.")
+            say("Can you say that again please")
+        except sr.RequestError as e:
+            print(f"Could not request results from Google Web Speech API; {e}")
+            say("please check your internet connection")
+            break  
+
+
 def username():
     say("What should I call you sir")
     uname = takeCommand(0.5, 0.3)
@@ -85,6 +93,83 @@ def username():
         print("NONE")
     say(f"How can i Help you {uname}")
 
+def setAlarm(t):
+    time_part, period = t.split()
+    hour, minutes = time_part.split(':')
+    period = period.upper()[0]
+    open('clock')
+    time.sleep(5)
+    pyautogui.click(x = 381, y = 189)
+    time.sleep(1)
+    pyautogui.click(x = 1501, y = 955)
+    time.sleep(1)
+    pyautogui.write(hour)
+    pyautogui.press('tab')
+    pyautogui.write(minutes)
+    pyautogui.press('tab')
+    pyautogui.write(period)
+    time.sleep(2)
+    pyautogui.click(x = 821, y = 834)
+    time.sleep(1)
+    pyautogui.click(x = 1540, y = 30)
+    
+def fetch_global_news():
+    api_key = '853249d52b494cefa4bafd81f4e740fc'  
+    news_url = f'https://newsapi.org/v2/top-headlines?language=en&apiKey={api_key}'
+
+    try:
+        jsonObj = urlopen(news_url)
+        data = json.load(jsonObj)
+        i = 1
+
+        say('Here are some top global news headlines in English:')
+        print('=============== TOP GLOBAL NEWS ===============\n')
+
+        for item in data['articles']:
+            # print(f"{i}. {item['title']}\n")
+            # print(f"{item['description']}\n")
+            say(f"{item['title']}. {i}\n")
+            i += 1
+
+    except Exception as e:
+        print(str(e))
+        
+import json
+import pyttsx3
+from urllib.request import urlopen
+
+# Initialize text-to-speech engine
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
+
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+# Function to fetch and speak news
+def fetch_us_news():
+    api_key = '853249d52b494cefa4bafd81f4e740fc'  # Replace with your actual API key
+    news_url = f'https://newsapi.org/v2/top-headlines?country=us&language=en&apiKey={api_key}'
+
+    try:
+        jsonObj = urlopen(news_url)
+        data = json.load(jsonObj)
+        i = 1
+
+        speak('Here are some top US news headlines in English:')
+        print('=============== TOP US NEWS ===============\n')
+
+        for item in data['articles']:
+            print(f"{i}. {item['title']}\n")
+            print(f"{item['description']}\n")
+            speak(f"{item['title']}. {i}\n")
+            i += 1
+
+    except Exception as e:
+        print(str(e))
+
+
 if __name__ == "__main__":
     clear = lambda: os.system('cls')
     
@@ -94,7 +179,7 @@ if __name__ == "__main__":
     
     while True:
         query = takeCommand().lower()
-        
+
         if 'wikipedia' in query:
             say('searching Wikipedia...')
             query = query.replace("wikipedia", "")
@@ -179,4 +264,43 @@ if __name__ == "__main__":
             say("User asked to Locate")
             say(location)
             webbrowser.open("https://www.google.nl / maps / place/" + location + "")  
+        elif "wikipedia" in query:
+            webbrowser.open("wikipedia.com")
+ 
+        elif "Good Morning" in query:
+            say("A warm" +query)
+            say("How are you Mister")
+            say(assname)
+ 
+        elif "will you be my gf" in query or "will you be my bf" in query:   
+            say("I'm not sure about, may be you should give me some time")
+ 
+        elif "how are you" in query:
+            say("I'm fine, glad you me that")
+ 
+        elif "i love you" in query:
+            say("It's hard to understand")
+ 
+        elif "what is" in query or "who is" in query:
+            app_id = "KJLTKY-4KH2LUU3K5"
+            client = wolframalpha.Client(app_id)
+            res = client.query(query)
+             
+            try:
+                print (next(res.results).text)
+                say (next(res.results).text)
+            except StopIteration:
+                print ("No results")
+        elif "alarm" in query:
+            say("What time to you want it")
+            time = takeCommand()
+            setAlarm(time)
+            say("Alarm set for {time}")  
+        elif 'news' in query:
+            if 'global' in query:
+                fetch_global_news()
+            elif 'us' in query:
+                fetch_us_news()
+          
+                 
         
