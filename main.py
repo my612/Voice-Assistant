@@ -168,6 +168,38 @@ def fetch_us_news():
 
     except Exception as e:
         print(str(e))
+        
+def getWeather(city):
+    api_key = "8276882096fd61e8dbc089bbc7b0f8f0"
+    complete_url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}'
+    
+    try:
+        response = requests.get(complete_url)
+        response.raise_for_status()  # Raise an error for bad status codes
+        data = response.json()
+
+        if data["cod"] != "404":
+            main = data["main"]
+            weather = data["weather"][0]
+            
+            temperature = main["temp"]
+            pressure = main["pressure"]
+            humidity = main["humidity"]
+            weather_description = weather["description"]
+            
+            print(f"Temperature: {temperature - 273} celsius")
+            print(f"Atmospheric pressure: {pressure} hPa")
+            print(f"Humidity: {humidity}%")
+            print(f"Weather description: {weather_description}")
+            say(f"Temperature in {city} today is: {round(float(temperature)) - 273} celsius")
+            say(f"Atmospheric pressure is: {pressure} hecto Pascal")
+            say(f"Humidity is: {humidity} percent")
+            say(f"Weather is: {weather_description}")
+
+        else:
+            print("City Not Found")
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
 
 
 if __name__ == "__main__":
@@ -301,6 +333,11 @@ if __name__ == "__main__":
                 fetch_global_news()
             elif 'us' in query:
                 fetch_us_news()
-          
+        elif "weather" in query:
+            say("what city do you live in?")
+            city = takeCommand()
+            getWeather(city)
+         
+             
                  
         
